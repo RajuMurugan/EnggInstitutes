@@ -1,4 +1,4 @@
-const iits = [
+const IITS_DATA = [
   {id:1,name:'IIT Madras',type:'IIT',state:'Tamil Nadu',city:'Chennai',website:'https://www.iitm.ac.in'},
   {id:2,name:'IIT Bombay',type:'IIT',state:'Maharashtra',city:'Mumbai',website:'https://www.iitb.ac.in'},
   {id:3,name:'IIT Delhi',type:'IIT',state:'Delhi',city:'New Delhi',website:'https://home.iitd.ac.in'},
