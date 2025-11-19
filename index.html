@@ -1,262 +1,138 @@
 <!doctype html>
-<!--
-  EnggInstitutes_site.html
-  Single-file static site to list engineering colleges in India for GitHub Pages.
-
-  Features:
-  - Search (name, city, district, code)
-  - Filter by state and type
-  - Client-side pagination & sorting
-  - CSV or JSON import (drag & drop)
-  - Responsive, accessible layout
-
-  How to use:
-  1. Save this file as index.html in a GitHub repo (enable GitHub Pages on the main branch).
-  2. Replace the `sampleData` array below with your full dataset, or use the Upload button to load a CSV/JSON.
-  3. CSV format expected (header row): rank,name,code,type,state,city,district,website
-  4. This is vanilla HTML/CSS/JS — no build step required.
--->
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>EnggInstitutes — Engineering Colleges of India</title>
-  <meta name="description" content="Search and browse engineering colleges across India" />
+  <meta name="description" content="Search and browse engineering institutes across India" />
+
+  <!-- Main CSS -->
   <style>
     :root{--bg:#0f1724;--card:#0b1220;--muted:#9aa4b2;--accent:#1e90ff;--glass: rgba(255,255,255,0.04)}
-    html,body{height:100%;margin:0;font-family:Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;color:#e6eef6;background:linear-gradient(180deg,#04112a 0%, #071428 100%);} 
-    .container{max-width:1100px;margin:28px auto;padding:20px}
-    header{display:flex;gap:16px;align-items:center;justify-content:space-between}
-    h1{font-size:20px;margin:0}
-    .subtitle{color:var(--muted);font-size:13px}
-    .card{background:var(--card);border-radius:12px;padding:18px;box-shadow:0 6px 18px rgba(2,6,23,0.6)}
-    .controls{display:flex;gap:12px;flex-wrap:wrap;margin-top:12px}
-    input[type=text],select{background:var(--glass);border:1px solid rgba(255,255,255,0.04);padding:10px 12px;border-radius:8px;color:inherit;min-width:180px}
-    button{background:var(--accent);border:none;padding:10px 12px;border-radius:8px;color:white;cursor:pointer}
-    .muted{color:var(--muted)}
-    .table-wrap{margin-top:16px}
+    html,body{height:100%;margin:0;font-family:Inter, ui-sans-serif, system-ui; background:#071428;color:#e6eef6;} 
+    .container{max-width:1250px;margin:28px auto;padding:20px}
+    header{margin-bottom:20px}
+    h1{font-size:26px;margin:0 0 6px 0}
+    .subtitle{color:var(--muted);font-size:14px;margin-bottom:16px}
+
+    .filters{display:flex;flex-wrap:wrap;gap:12px;background:var(--card);padding:16px;border-radius:12px}
+    select,input[type=text]{background:var(--glass);border:1px solid rgba(255,255,255,0.04);padding:10px 12px;border-radius:8px;color:inherit;min-width:180px}
+
+    .table-wrap{background:var(--card);margin-top:20px;border-radius:12px;padding:10px}
     table{width:100%;border-collapse:collapse;font-size:14px}
-    th,td{padding:10px 8px;text-align:left;border-bottom:1px solid rgba(255,255,255,0.03)}
-    th{font-weight:600;background:transparent;color:#cfe6ff}
-    tr:hover td{background:rgba(255,255,255,0.015)}
+    th,td{padding:10px 8px;text-align:left;border-bottom:1px solid rgba(255,255,255,0.05)}
+    th{font-weight:600;color:#cfe6ff;font-size:13px}
+    tr:hover td{background:rgba(255,255,255,0.04)}
     a{color:var(--accent);text-decoration:none}
-    .footer{display:flex;justify-content:space-between;align-items:center;margin-top:12px;color:var(--muted);font-size:13px}
-    .pager{display:flex;gap:6px;align-items:center}
-    .chip{background:rgba(255,255,255,0.03);padding:6px 8px;border-radius:999px;font-size:12px}
-    .dropzone{border:2px dashed rgba(255,255,255,0.03);padding:18px;border-radius:10px;text-align:center;color:var(--muted);margin-top:12px}
-    @media (max-width:760px){.controls{flex-direction:column}table{font-size:13px}}
+
+    @media(max-width:700px){table{font-size:12px}}
   </style>
 </head>
 <body>
   <div class="container">
     <header>
-      <div>
-        <h1>EnggInstitutes — Engineering Colleges of India</h1>
-        <div class="subtitle">Search, filter and export a directory of engineering colleges. Static site for GitHub Pages.</div>
-      </div>
-      <div style="text-align:right">
-        <div class="chip">Open-source • No backend required</div>
-      </div>
+      <h1>EnggInstitutes — Engineering Institutes of India</h1>
+      <div class="subtitle">Browse engineering institutes across India by state & category.</div>
     </header>
 
-    <section class="card" aria-labelledby="controls">
-      <div id="controls" class="controls" role="region" aria-label="search and filters">
-        <input id="search" type="text" placeholder="Search by college name, city, district or code" aria-label="search" />
-        <select id="stateFilter"><option value="">All States</option></select>
-        <select id="typeFilter"><option value="">All Types</option><option>Engineering-Rankings</option><option>Government</option><option>Private</option></select>
-        <select id="sortBy"><option value="rank">Sort: Rank</option><option value="name">Sort: Name</option><option value="city">Sort: City</option></select>
-        <button id="resetBtn">Reset</button>
-        <input id="fileInput" type="file" accept=".csv,application/json" style="display:none" />
-        <button id="uploadBtn">Upload CSV / JSON</button>
-      </div>
+    <!-- FILTERS -->
+    <div class="filters">
+      <input id="search" type="text" placeholder="Search by name, city, district...">
 
-      <div class="dropzone" id="dropzone">Drag & drop CSV or JSON here (optional). Example CSV header: rank,name,code,type,state,city,district,website</div>
+      <select id="stateFilter">
+        <option value="">All States</option>
+      </select>
 
-      <div class="table-wrap" id="tableWrap">
-        <table aria-describedby="tableDesc">
-          <thead>
-            <tr>
-              <th>Rank</th>
-              <th>Name</th>
-              <th>Code</th>
-              <th>Type</th>
-              <th>State</th>
-              <th>City</th>
-              <th>District</th>
-              <th>Website</th>
-            </tr>
-          </thead>
-          <tbody id="tableBody"></tbody>
-        </table>
-        <div class="footer">
-          <div id="tableDesc" class="muted">Showing <span id="showingCount">0</span> results</div>
-          <div class="pager">
-            <button id="prevBtn">Prev</button>
-            <div id="pageInfo" class="muted">Page 0</div>
-            <button id="nextBtn">Next</button>
-          </div>
-        </div>
-      </div>
+      <select id="categoryFilter">
+        <option value="">All Categories</option>
+        <option value="iit">IITs</option>
+        <option value="nit">NITs</option>
+        <option value="iiit">IIITs</option>
+        <option value="central">Central Universities</option>
+        <option value="state">State Universities</option>
+        <option value="deemed">Deemed Universities</option>
+        <option value="affiliated">Affiliated Colleges</option>
+      </select>
+    </div>
 
-    </section>
-
-    <section style="margin-top:12px;text-align:right">
-      <button id="downloadJson">Download JSON</button>
-      <button id="downloadCsv">Download CSV</button>
-    </section>
+    <!-- TABLE -->
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Rank</th>
+            <th>Name</th>
+            <th>Category</th>
+            <th>State</th>
+            <th>City</th>
+            <th>Website</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
   </div>
 
+  <!-- Load category datasets -->
+  <script src="data/iits.js"></script>
+  <script src="data/nits.js"></script>
+  <script src="data/iiits.js"></script>
+  <script src="data/central.js"></script>
+  <script src="data/state_universities.js"></script>
+  <script src="data/deemed_universities.js"></script>
+  <script src="data/affiliated_colleges.js"></script>
+
   <script>
-    // SAMPLE DATA - replace this or use upload to load full dataset
-    const sampleData = [
-      {rank:100, name:"Sri Krishna College of Engineering and Technology", code:"SKCET", type:"Engineering-Rankings", state:"Tamil Nadu", city:"Coimbatore", district:"Coimbatore", website:"https://skcet.ac.in"},
-      {rank:101, name:"Indian Institute of Technology Bombay", code:"IITB", type:"Government", state:"Maharashtra", city:"Mumbai", district:"Mumbai", website:"https://www.iitb.ac.in"},
-      {rank:102, name:"National Institute of Technology Trichy", code:"NITT", type:"Government", state:"Tamil Nadu", city:"Tiruchirappalli", district:"Tiruchirappalli", website:"https://www.nitt.edu"}
+    // Combine all data
+    let data = [
+      ...IITS_DATA,
+      ...NITS_DATA,
+      ...IIITS_DATA,
+      ...CENTRAL_UNIV_DATA,
+      ...STATE_UNIV_DATA,
+      ...DEEMED_UNIV_DATA,
+      ...AFFILIATED_COLLEGES_DATA
     ];
 
-    let data = [...sampleData];
-    let filtered = [];
-    const pageSize = 10;
-    let page = 1;
+    const searchInput = document.getElementById('search');
+    const stateFilter = document.getElementById('stateFilter');
+    const categoryFilter = document.getElementById('categoryFilter');
+    const tableBody = document.getElementById('tableBody');
 
-    const el = id => document.getElementById(id);
-    const tableBody = el('tableBody');
-    const showingCount = el('showingCount');
-    const stateFilter = el('stateFilter');
-    const typeFilter = el('typeFilter');
-    const searchInput = el('search');
-    const sortBy = el('sortBy');
-    const prevBtn = el('prevBtn');
-    const nextBtn = el('nextBtn');
-    const pageInfo = el('pageInfo');
-    const resetBtn = el('resetBtn');
-    const uploadBtn = el('uploadBtn');
-    const fileInput = el('fileInput');
-    const dropzone = el('dropzone');
-    const downloadJson = el('downloadJson');
-    const downloadCsv = el('downloadCsv');
+    // Populate STATES dynamically
+    const states = [...new Set(data.map(d => d.state))].sort();
+    states.forEach(s => stateFilter.innerHTML += `<option value="${s}">${s}</option>`);
 
-    function populateStateFilter(){
-      const states = Array.from(new Set(data.map(d => d.state).filter(Boolean))).sort();
-      stateFilter.innerHTML = '<option value="">All States</option>' + states.map(s=>`<option>${s}</option>`).join('');
-    }
-
-    function applyFilters(){
-      const q = searchInput.value.trim().toLowerCase();
+    // Refresh table
+    function render(){
+      const q = searchInput.value.toLowerCase();
       const st = stateFilter.value;
-      const tp = typeFilter.value;
-      filtered = data.filter(d=>{
-        if(st && d.state!==st) return false;
-        if(tp && d.type!==tp) return false;
-        if(!q) return true;
-        return [d.name,d.city,d.district,d.code].some(v=>v && v.toLowerCase().includes(q));
+      const ca = categoryFilter.value;
+
+      const filtered = data.filter(d => {
+        if(st && d.state !== st) return false;
+        if(ca && d.category !== ca) return false;
+        if(q && !d.name.toLowerCase().includes(q) && !d.city.toLowerCase().includes(q)) return false;
+        return true;
       });
-      sortAndRender();
+
+      tableBody.innerHTML = filtered.map(r => `
+        <tr>
+          <td>${r.rank || ''}</td>
+          <td>${r.name}</td>
+          <td>${(r.category || '').toUpperCase()}</td>
+          <td>${r.state}</td>
+          <td>${r.city}</td>
+          <td><a href="${r.website}" target="_blank">site</a></td>
+        </tr>
+      `).join('');
     }
 
-    function sortAndRender(){
-      const s = sortBy.value;
-      filtered.sort((a,b)=>{
-        if(s==='rank') return (a.rank||0) - (b.rank||0);
-        return (a[s]||'').toString().localeCompare((b[s]||'').toString());
-      });
-      renderPage();
-    }
+    searchInput.oninput = render;
+    stateFilter.onchange = render;
+    categoryFilter.onchange = render;
 
-    function renderPage(){
-      const total = filtered.length;
-      const totalPages = Math.max(1, Math.ceil(total/pageSize));
-      if(page>totalPages) page = totalPages;
-      const start = (page-1)*pageSize;
-      const slice = filtered.slice(start, start+pageSize);
-      tableBody.innerHTML = slice.map(r=>`<tr>
-        <td>${r.rank||''}</td>
-        <td title="${escapeHtml(r.name||'')}">${escapeHtml(r.name||'')}</td>
-        <td>${escapeHtml(r.code||'')}</td>
-        <td>${escapeHtml(r.type||'')}</td>
-        <td>${escapeHtml(r.state||'')}</td>
-        <td>${escapeHtml(r.city||'')}</td>
-        <td>${escapeHtml(r.district||'')}</td>
-        <td>${r.website?`<a href="${r.website}" target="_blank" rel="noopener">site</a>`:''}</td>
-      </tr>`).join('');
-      showingCount.textContent = total;
-      pageInfo.textContent = `Page ${page} of ${totalPages}`;
-    }
-
-    function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-
-    // CSV / JSON import helpers
-    function parseCSV(text){
-      const lines = text.split(/\r?\n/).filter(Boolean);
-      const headers = lines.shift().split(/,\s*/).map(h=>h.trim());
-      return lines.map(line=>{
-        const cols = line.split(/,\s*/);
-        const obj = {};
-        headers.forEach((h,i)=>obj[h]=cols[i]||'');
-        // coerce rank to number
-        if(obj.rank) obj.rank = Number(obj.rank);
-        return obj;
-      });
-    }
-
-    function handleFileText(text, name){
-      try{
-        if(name.endsWith('.json') || text.trim().startsWith('[')){
-          const parsed = JSON.parse(text);
-          if(Array.isArray(parsed)) data = parsed;
-        } else {
-          data = parseCSV(text);
-        }
-      }catch(e){ alert('Failed to parse file: '+e.message); return; }
-      populateStateFilter(); page=1; applyFilters();
-    }
-
-    // file input and drag-drop
-    uploadBtn.addEventListener('click', ()=>fileInput.click());
-    fileInput.addEventListener('change', e=>{
-      const f = e.target.files[0]; if(!f) return;
-      const reader = new FileReader();
-      reader.onload = ev => handleFileText(ev.target.result, f.name);
-      reader.readAsText(f);
-    });
-
-    ['dragenter','dragover'].forEach(evt=>dropzone.addEventListener(evt,e=>{e.preventDefault();dropzone.style.borderColor='rgba(255,255,255,0.15)'}));
-    ['dragleave','drop'].forEach(evt=>dropzone.addEventListener(evt,e=>{e.preventDefault();dropzone.style.borderColor='rgba(255,255,255,0.03)'}));
-    dropzone.addEventListener('drop', e=>{
-      const f = e.dataTransfer.files && e.dataTransfer.files[0];
-      if(!f) return; const reader = new FileReader(); reader.onload = ev=>handleFileText(ev.target.result, f.name); reader.readAsText(f);
-    });
-
-    // pagination
-    prevBtn.addEventListener('click', ()=>{ if(page>1) page--; renderPage(); });
-    nextBtn.addEventListener('click', ()=>{ page++; renderPage(); });
-
-    // controls
-    searchInput.addEventListener('input', ()=>{ page=1; applyFilters(); });
-    stateFilter.addEventListener('change', ()=>{ page=1; applyFilters(); });
-    typeFilter.addEventListener('change', ()=>{ page=1; applyFilters(); });
-    sortBy.addEventListener('change', ()=>{ page=1; sortAndRender(); });
-    resetBtn.addEventListener('click', ()=>{ searchInput.value=''; stateFilter.value=''; typeFilter.value=''; sortBy.value='rank'; page=1; applyFilters(); });
-
-    // downloads
-    downloadJson.addEventListener('click', ()=>{
-      const blob = new Blob([JSON.stringify(filtered.length?filtered:data, null, 2)], {type:'application/json'});
-      const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href=url; a.download='engg_institutes.json'; a.click(); URL.revokeObjectURL(url);
-    });
-    downloadCsv.addEventListener('click', ()=>{
-      const rows = (filtered.length?filtered:data);
-      if(!rows.length){ alert('No data to download'); return; }
-      const headers = Object.keys(rows[0]);
-      const csv = [headers.join(',')].concat(rows.map(r=>headers.map(h=>`"${(r[h]||'').toString().replace(/"/g,'""')}"`).join(','))).join('\n');
-      const blob = new Blob([csv], {type:'text/csv'}); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href=url; a.download='engg_institutes.csv'; a.click(); URL.revokeObjectURL(url);
-    });
-
-    // initialize
-    (function init(){
-      data = [...sampleData];
-      populateStateFilter();
-      applyFilters();
-    })();
+    render();
   </script>
 </body>
 </html>
